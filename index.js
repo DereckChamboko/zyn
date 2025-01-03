@@ -18,7 +18,9 @@ const openai = new OpenAI({
 });
 
 // Redis client setup
-const redisClient = redis.createClient();
+const redisClient = redis.createClient({
+    url: process.env.redis_url
+});
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
 redisClient.connect();
 
