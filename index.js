@@ -55,7 +55,7 @@ app.post('/prompt', async (req, res) => {
         console.log("response: ",firstResponse);
         const Imgresponse = await openai.images.generate({
             model: "dall-e-3",
-            prompt: firstResponse,
+            prompt: "Draw a diagram of an animal cell",
             n: 1,
             size: "1024x1024",
           });
