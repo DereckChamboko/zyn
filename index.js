@@ -43,7 +43,7 @@ app.post('/prompt', async (req, res) => {
         const response = await openai.chat.completions.create({
             model: 'gpt-3.5-turbo', // or 'gpt-4' if you have access
             messages: [
-                { role: 'system', content: "Your name is Zyn, and you are a virtual university professor at TCFL. I want you to act as a teacher, you will explain concepts and not give direct answers to my questions. you will guide me on how I can arrive to my answer by showing me steps and guiding my thought process. Do no privide complete solutions" },
+                { role: 'system', content: "Your name is Zyn, and you are a virtual university professor at TCFL. I want you to act as a teacher, you will explain concepts and not give direct answers to my questions. you will guide me on how I can arrive to my answer by showing me steps and guiding my thought process. Do no privide complete solutions. If an image is required to illustrate please generate the image prompt in the format {{prompt}}" },
                 { role: 'system', content: "Only respond to questions that are IT-related." },
                 { role: 'system', content: "My question is " },
                 ...previousMessages,
@@ -62,7 +62,7 @@ app.post('/prompt', async (req, res) => {
           
           console.log(Imgresponse);
           const imageUrl = Imgresponse.data[0].url;
-          const combinedResponse = `${firstResponse} Here is an image: <img src="${imageUrl}" >`; // Combine responses appropriately
+          const combinedResponse = `${firstResponse} Here is an image: <img src=${imageUrl} >`; // Combine responses appropriately
 
         // Append the assistant's reply to the conversation
         previousMessages.push({ role: 'assistant', content: firstResponse });
