@@ -60,7 +60,8 @@ app.post('/prompt', async (req, res) => {
             size: "1024x1024",
           });
           
-          console.log(Imgresponse.data[0].url);
+          console.log(Imgresponse);
+          const imageUrl = Imgresponse.data[0].url;
           const combinedResponse = `${firstResponse} Here is an image: ${imageUrl}`; // Combine responses appropriately
 
         // Append the assistant's reply to the conversation
