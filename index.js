@@ -62,15 +62,15 @@ app.post('/prompt', async (req, res) => {
           
           console.log(Imgresponse);
           const imageUrl = Imgresponse.data[0].url;
-          const combinedResponse = `${firstResponse} Here is an image: ${imageUrl}`; // Combine responses appropriately
+          const combinedResponse = `${firstResponse} Here is an image: <img src='${imageUrl}' >`; // Combine responses appropriately
 
         // Append the assistant's reply to the conversation
-        previousMessages.push({ role: 'assistant', content: combinedResponse });
+        previousMessages.push({ role: 'assistant', content: firstResponse });
 
         // Store the updated conversation back to Redis
         await redisClient.set(userId, JSON.stringify(previousMessages));
 
-        res.json({ userId, response: firstResponse });
+        res.json({ userId, response: combinedResponse });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'An error occurred while processing your request.' });
