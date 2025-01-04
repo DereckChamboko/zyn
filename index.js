@@ -52,8 +52,18 @@ app.post('/prompt', async (req, res) => {
 
         const firstResponse = response.choices[0].message.content;
 
+        const Imgresponse = await openai.images.generate({
+            model: "dall-e-3",
+            prompt: firstResponse,
+            n: 1,
+            size: "1024x1024",
+          });
+          
+          console.log(Imgresponse.data[0].url);
+          const combinedResponse = `${firstResponse} Here is an image: ${imageUrl}`; // Combine responses appropriately
+
         // Append the assistant's reply to the conversation
-        previousMessages.push({ role: 'assistant', content: firstResponse });
+        previousMessages.push({ role: 'assistant', content: combinedResponse });
 
         // Store the updated conversation back to Redis
         await redisClient.set(userId, JSON.stringify(previousMessages));
