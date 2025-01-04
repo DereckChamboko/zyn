@@ -62,7 +62,7 @@ app.post('/prompt', async (req, res) => {
           
           console.log(Imgresponse);
           const imageUrl = Imgresponse.data[0].url;
-          const combinedResponse = `${firstResponse} Here is an image: <img src='${imageUrl}' >`; // Combine responses appropriately
+          const combinedResponse = `${firstResponse} Here is an image: <img src="${imageUrl}" >`; // Combine responses appropriately
 
         // Append the assistant's reply to the conversation
         previousMessages.push({ role: 'assistant', content: firstResponse });
