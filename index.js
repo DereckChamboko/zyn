@@ -52,17 +52,26 @@ app.post('/prompt', async (req, res) => {
 
         const firstResponse = response.choices[0].message.content;
 
-        console.log("response: ",firstResponse);
-        const Imgresponse = await openai.images.generate({
-            model: "dall-e-3",
-            prompt: "Draw a diagram of an animal cell",
-            n: 1,
-            size: "1024x1024",
-          });
-          
-          console.log(Imgresponse);
-          const imageUrl = Imgresponse.data[0].url;
-          const combinedResponse = `${firstResponse} Here is an image: <img src=${imageUrl} >`; // Combine responses appropriately
+        const imagePromptMatch = firstResponse.match(/{{(.*?)}}/);
+        let combinedResponse;
+
+        if (imagePromptMatch) {
+            const imagePrompt = imagePromptMatch[1].trim(); // Extract the prompt inside the brackets
+
+            const imgResponse = await openai.images.generate({
+                model: "dall-e-3",
+                prompt: imagePrompt,
+                n: 1,
+                size: "1024x1024",
+            });
+
+            console.log(imgResponse);
+            const imageUrl = imgResponse.data[0].url;
+
+            combinedResponse = `${firstResponse} Here is an image: <img src="${imageUrl}" alt="Generated Image">`;
+        } else {
+            combinedResponse = firstResponse; // Return the response as it is
+        }
 
         // Append the assistant's reply to the conversation
         previousMessages.push({ role: 'assistant', content: firstResponse });
