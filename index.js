@@ -52,6 +52,7 @@ app.post('/prompt', async (req, res) => {
 
         const firstResponse = response.choices[0].message.content;
 
+        console.log("response: ",firstResponse);
         const Imgresponse = await openai.images.generate({
             model: "dall-e-3",
             prompt: firstResponse,
