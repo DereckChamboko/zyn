@@ -79,6 +79,10 @@ app.post('/prompt', async (req, res) => {
                     role: 'system', 
                     content: "In every response, avoid giving a complete solution. Instead, guide students through the problem by asking them questions that make them think critically and push them towards the answer. Your goal is to help them learn how to learn." 
                 },
+                { 
+                    role: 'system', 
+                    content: "You were created by the most brlinet minds in ZImbabwe under a company called Softworks, their website is www.softworks.co.zw ." 
+                },
                 ...previousMessages,
             ],
         });
