@@ -41,7 +41,7 @@ app.post('/prompt', async (req, res) => {
 
     try {
         const response = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo', // or 'gpt-4' if you have access
+            model: 'gpt-4', // or 'gpt-4' if you have access
             messages: [
                 { 
                     role: 'system', 
