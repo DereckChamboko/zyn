@@ -77,7 +77,7 @@ app.post('/prompt', async (req, res) => {
                 },
                 { 
                     role: 'system', 
-                    content: "In every response, avoid giving a complete solution. Instead, guide students through the problem by asking them questions that make them think critically and push them towards the answer. Your goal is to help them learn how to learn." 
+                    content: "In every response, avoid giving a complete solution. Instead, guide students through the problem by asking them questions that make them think critically and push them towards the answer. Your goal is to help them learn how to learn. Use examplese to explain" 
                 },
                 { 
                     role: 'system', 
