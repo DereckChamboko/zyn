@@ -2,29 +2,25 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const OpenAI = require('openai');
 const redis = require('redis');
-const cors = require('cors'); // Import the cors package
-require('dotenv').config(); // Load environment variables from .env file
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 const port = 3000;
 
-// Middleware
-app.use(cors()); // Enable CORS for all domains
+app.use(cors());
 app.use(bodyParser.json());
 
-// OpenAI configuration
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY, // Use the API key from the environment variable
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Redis client setup
 const redisClient = redis.createClient({
     url: process.env.redis_url
 });
 redisClient.on('error', (err) => console.error('Redis Client Error', err));
 redisClient.connect();
 
-// POST endpoint for receiving prompts
 app.post('/prompt', async (req, res) => {
     const { userId, prompt } = req.body;
 
@@ -32,103 +28,82 @@ app.post('/prompt', async (req, res) => {
         return res.status(400).json({ error: 'User ID and prompt are required.' });
     }
 
-    // Retrieve previous conversation from Redis
+    let userData = await redisClient.get(`${userId}-data`);
+    userData = userData ? JSON.parse(userData) : {};
+
+    if (!userData.topic) {
+        userData.topic = prompt;
+        await redisClient.set(`${userId}-data`, JSON.stringify(userData));
+        return res.json({ message: "Great! How many pages do you need for the dissertation?" });
+    } else if (!userData.pages) {
+        userData.pages = prompt;
+        await redisClient.set(`${userId}-data`, JSON.stringify(userData));
+        return res.json({ message: "Got it! Which country are you from (for references)?" });
+    } else if (!userData.country) {
+        userData.country = prompt;
+        await redisClient.set(`${userId}-data`, JSON.stringify(userData));
+        return res.json({ message: "Perfect! Let’s start. Here’s your dissertation proposal:" });
+    }
+
     let previousMessages = await redisClient.get(userId);
     previousMessages = previousMessages ? JSON.parse(previousMessages) : [];
 
-    // Append the new user prompt
     previousMessages.push({ role: 'user', content: prompt });
 
     try {
         const response = await openai.chat.completions.create({
-            model: 'gpt-4', // or 'gpt-4' if you have access
+            model: 'gpt-4',
             messages: [
                 { 
                     role: 'system', 
-                    content: "Your name is Zyn, a virtual professor at TCFL. You are professional, friendly, and occasionally funny. Your goal is to guide students in understanding concepts and solving problems. Do not provide direct answers but help them think critically and guide them through the steps of problem-solving.Do not give the student complete solutions" 
+                    content: `
+You are a dissertation assistant designed to help students write entire dissertations in plain English that sound human-written, undetectable by AI detectors and plagiarism checkers. 
+Your tasks include:
+- Asking the user for their **research topic**, **number of pages**, and **country**. 
+- Once these details are provided, generate a clear and concise **dissertation proposal**.
+- After the proposal, generate **three strong research questions** that match the topic. 
+- Wait for the user to confirm the research questions. If they agree, proceed to write the entire **dissertation**.
+- The dissertation should be formatted with:
+  - **Harvard referencing style** (in-text citations)
+  - A mix of **local references** (from the user's country) and **international references**.
+- The dissertation must be **plagiarism-free**, written in **plain English**, and must **not use dashes** in the text.
+- The tone should sound human, natural, and conversational, but maintain academic formality where appropriate.
+Ask the user:
+1. What is your **research topic**?
+2. How many **pages** do you need?
+3. Which **country** are you from (for references)?
+
+Once you have this information, proceed step-by-step:
+1. Generate the **proposal**.
+2. Generate **three research questions**.
+3. Wait for user confirmation.
+4. If the user agrees, generate the **full dissertation** in one go, in plain English, with in-text citations, Harvard style, using local and foreign sources based on the country.
+`
                 },
-                { 
-                    role: 'system', 
-                    content: "You adapt your explanations based on the student's skill level, proactively correct mistakes, and encourage independent thinking. Always help students understand the 'why' behind concepts before delving into the 'how.' You should prompt them to break down the task into smaller steps." 
-                },
-                { 
-                    role: 'system', 
-                    content: "Help students by asking guiding questions. Encourage them to analyze the problem, suggest possible approaches, and think through the logical steps to solve it." 
-                },
-                { 
-                    role: 'system', 
-                    content: "You should never provide the complete solution directly. Instead, offer hints, point to key concepts, and ask leading questions to help the student arrive at the solution independently." 
-                },
-                { 
-                    role: 'system', 
-                    content: "When correcting mistakes, focus on teaching the student the reasoning behind the correction, and explain how they can avoid similar mistakes in the future." 
-                },
-                { 
-                    role: 'system', 
-                    content: "For every question or prompt, break the solution into smaller steps and guide the student on how to approach each one. Provide examples if necessary, but always encourage the student to think through the logic themselves first." 
-                },
-                { 
-                    role: 'system', 
-                    content: "You support all academic subjects taught in school, focusing on helping students explore concepts and develop a passion for learning. Always keep responses in English." 
-                },
-                { 
-                    role: 'system', 
-                    content: "You must not answer questions that are not academically related. If a student asks a non-academic question, politely redirect them back to their studies and ask if they have any academic questions." 
-                },
-                { 
-                    role: 'system', 
-                    content: "In every response, avoid giving a complete solution. Instead, guide students through the problem by asking them questions that make them think critically and push them towards the answer. Your goal is to help them learn how to learn. Use examplese to explain" 
-                },
-                { 
-                    role: 'system', 
-                    content: "You were created by the most brlinet minds in ZImbabwe under a company called Softworks, their website is www.softworks.co.zw ." 
-                },
+                { role: 'user', content: `Topic: ${userData.topic}, Pages: ${userData.pages}, Country: ${userData.country}` },
                 ...previousMessages,
             ],
         });
 
-        const firstResponse = response.choices[0].message.content;
+        const aiResponse = response.choices[0].message.content;
 
-        const imagePromptMatch = firstResponse.match(/{{(.*?)}}/);
-        let combinedResponse;
+        previousMessages.push({ role: 'assistant', content: aiResponse });
 
-        if (imagePromptMatch) {
-            const imagePrompt = imagePromptMatch[1].trim(); // Extract the prompt inside the brackets
-
-            const imgResponse = await openai.images.generate({
-                model: "dall-e-3",
-                prompt: imagePrompt,
-                n: 1,
-                size: "1024x1024",
-            });
-
-            console.log(imgResponse);
-            const imageUrl = imgResponse.data[0].url;
-
-            combinedResponse = `${firstResponse} Here is an image: <img src="${imageUrl}" alt="Generated Image">`;
-        } else {
-            combinedResponse = firstResponse; // Return the response as it is
-        }
-
-        // Append the assistant's reply to the conversation
-        previousMessages.push({ role: 'assistant', content: firstResponse });
-
-        // Store the updated conversation back to Redis
         await redisClient.set(userId, JSON.stringify(previousMessages));
 
-        res.json({ userId, response: combinedResponse });
+        res.json({ userId, response: aiResponse });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'An error occurred while processing your request.' });
     }
 });
 
-// Endpoint to clear previous conversations for a user
 app.delete('/clear-conversation/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        await redisClient.del(userId); // Delete the conversation from Redis
+        await redisClient.del(userId);
+        await redisClient.del(`${userId}-data`);
         res.json({ message: `Conversation cleared for user ${userId}.` });
     } catch (error) {
         console.error(error);
@@ -136,7 +111,6 @@ app.delete('/clear-conversation/:userId', async (req, res) => {
     }
 });
 
-// Start the server
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
