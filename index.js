@@ -66,8 +66,9 @@ app.post('/prompt', async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      max_tokens: 1000,  // max output tokens —  adjust as needed
+      model: 'gpt-4-turbo',  // Use GPT-4-Turbo for higher max tokens and lower cost
+      max_tokens: 4096,      // The highest reliable value for GPT-4-Turbo
+      temperature: 0.7,      // Optional: adjust creativity
       messages: [
         {
           role: 'system',
@@ -94,7 +95,7 @@ Important:
 - do not use repetitive sentence structures
 - Write with occasional minor typos or informal formatting (like starting a sentence with 'And' or using dashes/em dashes creatively) to imitate human typing style.
 - Write the text so it sometimes questions itself or reflects on the topic, showing thought processes and uncertainty as a human might do
--Write with a variety of sentence types—mix short and long sentences, use questions, exclamations, and incomplete sentences occasionally. Avoid repeating the same phrases or patterns to reduce robotic tone.
+- Write with a variety of sentence types—mix short and long sentences, use questions, exclamations, and incomplete sentences occasionally. Avoid repeating the same phrases or patterns to reduce robotic tone.
 
 Ask the user:
 1. What is your **research topic**?
