@@ -67,7 +67,7 @@ app.post('/prompt', async (req, res) => {
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
-      max_tokens: 4000,  // max output tokens —  adjust as needed
+      max_tokens: 1000,  // max output tokens —  adjust as needed
       messages: [
         {
           role: 'system',
